@@ -1,0 +1,1 @@
+from .inboxpage import InboxPage
