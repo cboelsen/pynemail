@@ -45,8 +45,13 @@ class ImapEmail(Email):
         self._imapcon = imapcon
         self.clear()
 
-    def _get_message(self):
+    def _get_headers(self):
         _, data = self._imapcon.fetch(self._num, '(RFC822.HEADER)')
+        return self.parser.parsebytes(data[0][1])
+
+    def _get_message(self):
+        self._flags = None
+        _, data = self._imapcon.fetch(self._num, '(RFC822)')
         return self.parser.parsebytes(data[0][1])
 
     def flags(self):

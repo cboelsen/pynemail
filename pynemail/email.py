@@ -53,6 +53,11 @@ class Email:
             self._message = self._get_message()
         return self._message
 
+    def headers(self):
+        if self._headers is None:
+            self._headers = self._get_headers()
+        return self._headers
+
     def body(self):
         if self._body is None:
             self._body = self.message().get_body(preferencelist=('plain', )).get_content()
@@ -60,7 +65,7 @@ class Email:
 
     def sender(self):
         if self._from is None:
-            f = self.message()['From']
+            f = self.headers()['From']
             if ' ' in f:
                 f = ' '.join(f.split(' ')[:-1]).strip()
             if f[0] == '"' and f[-1] == '"':
@@ -69,10 +74,10 @@ class Email:
         return self._from
 
     def date(self):
-        return self.message()['Date'][:-5]
+        return self.headers()['Date'][:-5]
 
     def subject(self):
-        return self.message()['Subject']
+        return self.headers()['Subject']
 
     def flags(self):
         raise NotImplementedError('Email.flags()')
@@ -87,6 +92,7 @@ class Email:
         self._deleted = None
         self._draft = None
         self._date = None
+        self._headers = None
         self._message = None
         self._body = None
         self._from = None

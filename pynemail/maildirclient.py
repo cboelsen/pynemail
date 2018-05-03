@@ -64,6 +64,9 @@ class MaildirEmail(Email):
     def __hash__(self):
         return hash(self.filepath)
 
+    def _get_headers(self):
+        return self.message()
+
     def _get_message(self):
         with self.filepath.open('rb') as fp:
             return self.parser.parse(fp)

@@ -3,6 +3,7 @@ import curses
 from .detailpage import DetailPage
 from .emailmenu import EmailMenu
 from .page import Page
+from .utils import shrink_text_to_cols
 
 
 class EmailField:
@@ -31,10 +32,7 @@ class EmailField:
         if self.selected:
             extra |= curses.A_STANDOUT
         from_text = self.email.sender().ljust(self.from_width)
-        if len(self.email.subject()) > self.subject_width - 1:
-            subject_text = self.email.subject()[:self.subject_width - 4] + '...'
-        else:
-            subject_text = self.email.subject()
+        subject_text = shrink_text_to_cols(self.email.subject(), self.subject_width - 1)
         subject_text = subject_text.ljust(self.subject_width)
         text = '{}{}{}'.format(from_text, subject_text, self.email.date())
         screen.addstr(column, 1, text, extra)
@@ -79,14 +77,21 @@ class InboxPage(Page):
     def _resize(self, h, w):
         self.from_width = max([len(m.sender()) for m in self.mail]) + 1
 
+    def _update_child_pages(self):
+        for child_page in self.child_pages:
+            if hasattr(child_page, 'email'):
+                child_page.email = self.mail[self.selected_row]
+
     def _keypress(self, key):
         if key == curses.KEY_UP:
             if self.selected_row > 0:
                 self.selected_row -= 1
+                self._update_child_pages()
             return False
         elif key == curses.KEY_DOWN:
             if self.selected_row < curses.LINES - 2 and self.selected_row < len(self.mail) - 1:
                 self.selected_row += 1
+                self._update_child_pages()
             return False
         #elif key == curses.KEY_ENTER:
         elif key == 10:  # ENTER
