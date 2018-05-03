@@ -68,9 +68,9 @@ class ImapEmail(Email):
 
 
 @contextmanager
-def imap_client(password):
-    # TODO: Make this configurable
-    M = imaplib.IMAP4('localhost')
+def imap_client(server, password):
+    server, port = server.split(':') if ':' in server else server, imaplib.IMAP4_PORT
+    M = imaplib.IMAP4(host=server, port=port)
     M.login(getpass.getuser(), password)
     M.select()
     try:

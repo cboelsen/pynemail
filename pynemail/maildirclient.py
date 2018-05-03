@@ -73,7 +73,7 @@ class MaildirEmail(Email):
 
     def flags(self):
         if self._flags is None:
-            self._flags = parse_maildir_flags(filepath)
+            self._flags = parse_maildir_flags(self.filepath)
         return self._flags
 
     def mtime(self):
