@@ -87,16 +87,16 @@ class Email:
     def flags(self):
         """Return the flags set for this email.
 
-        :returns: A list of EmailFlag.
-        :rtype: list
+        :return: A list of flags.
+        :rtype: list[EmailFlag]
         """
         raise NotImplementedError('Email.flags()')
 
     def set_flag(self, flag, state):
         """Set or unset the given flag, based on the provided state.
 
-        :param flag EmailFlag: The flag to manipulate.
-        :param state bool: True to set the flag, False to unset the flag.
+        :param EmailFlag flag: The flag to manipulate.
+        :param bool state: True to set the flag, False to unset the flag.
         """
         raise NotImplementedError('Email.set_flag()')
 
