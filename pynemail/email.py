@@ -60,6 +60,8 @@ class Email:
 
     def body(self):
         if self._body is None:
+            if self.unread():
+                self.set_flag(EmailFlag.READ, True)
             self._body = self.message().get_body(preferencelist=('plain', )).get_content()
         return self._body
 
