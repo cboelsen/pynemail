@@ -72,11 +72,9 @@ class DetailPage(Page):
     def toggle_read(self):
         newstate = self._email.unread()
         self._email.set_flag(EmailFlag.READ, newstate)
-        self._email.clear()
         self.removeme(self)
 
     def toggle_important(self):
         newstate = not self._email.important()
         self._email.set_flag(EmailFlag.FLAGGED, newstate)
-        self._email.clear()
         self.removeme(self)

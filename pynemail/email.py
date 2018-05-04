@@ -85,20 +85,35 @@ class Email:
         return self.headers()['Subject']
 
     def flags(self):
+        """Return the flags set for this email.
+
+        :returns: A list of EmailFlag.
+        :rtype: list
+        """
         raise NotImplementedError('Email.flags()')
 
     def set_flag(self, flag, state):
+        """Set or unset the given flag, based on the provided state.
+
+        :param flag EmailFlag: The flag to manipulate.
+        :param state bool: True to set the flag, False to unset the flag.
+        """
         raise NotImplementedError('Email.set_flag()')
 
     def clear(self):
-        self._unread = None
-        self._important = None
-        self._replied = None
-        self._deleted = None
-        self._draft = None
+        """Clear all cached state to force the lazy initialisers to reload."""
+        self.clear_flags()
         self._date = None
         self._headers = None
         self._message = None
         self._body = None
         self._from = None
         self._flags = None
+
+    def clear_flags(self):
+        """Clear all cached flags to force the lazy initialisers to reload."""
+        self._unread = None
+        self._important = None
+        self._replied = None
+        self._deleted = None
+        self._draft = None

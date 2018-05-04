@@ -65,6 +65,7 @@ class ImapEmail(Email):
         assert flag in MAP_FLAG_TO_IMAP
         imap_flag = MAP_FLAG_TO_IMAP[flag]
         self._imapcon.store(self._num, command, imap_flag.value)
+        self.clear_flags()
 
 
 @contextmanager

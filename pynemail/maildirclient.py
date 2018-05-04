@@ -29,7 +29,7 @@ MAP_FLAG_TO_MAILDIR = {
 }
 
 
-class UnknownMaildirFlag(Exception):
+class UnknownMaildirFlagsType(Exception):
     pass
 
 
@@ -37,12 +37,24 @@ def parse_maildir_flags(filepath):
     flag_string = filepath.name.split(':')[1]
     flag_type, flag_chars = flag_string.split(',')
     if int(flag_type) != 2:
-        raise UnknownMaildirFlag(flag_type)
+        raise UnknownMaildirFlagsType(flag_type)
     flags = []
     for flag in MaildirFlag:
         if flag.value in flag_chars:
             flags.append(flag)
     return flags
+
+
+def update_maildir_flags(filepath, flags):
+    keep_name, flag_string = filepath.name.split(':')
+    flag_type, flag_chars = flag_string.split(',')
+    if int(flag_type) != 2:
+        raise UnknownMaildirFlagsType(flag_type)
+    newflag_string = ''.join([f.value for f in sorted(flags)])
+    newname = '{}:{},{}'.format(keep_name, flag_type, newflag_string)
+    newpath = filepath.parent / newname
+    filepath.rename(newpath)
+    return newpath
 
 
 class MaildirEmail(Email):
@@ -75,6 +87,19 @@ class MaildirEmail(Email):
         if self._flags is None:
             self._flags = parse_maildir_flags(self.filepath)
         return self._flags
+
+    def set_flag(self, flag, state):
+        assert flag in MAP_FLAG_TO_MAILDIR
+        maildir_flag = MAP_FLAG_TO_MAILDIR[flag]
+        if state and maildir_flag not in self._flags:
+            self._flags.append(maildir_flag)
+            self._flags.sort()
+            self.filepath = update_maildir_flags(self.filepath, self._flags)
+            self.clear_flags()
+        elif maildir_flag in self._flags:
+            self._flags.remove(maildir_flag)
+            self.filepath = update_maildir_flags(self.filepath, self._flags)
+            self.clear_flags()
 
     def mtime(self):
         if self._mtime is None:

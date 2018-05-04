@@ -75,11 +75,9 @@ class EmailMenu(Page):
     def toggle_read(self):
         newstate = self.email.unread()
         self.email.set_flag(EmailFlag.READ, newstate)
-        self.email.clear()
         self.removeme(self)
 
     def toggle_important(self):
         newstate = not self.email.important()
         self.email.set_flag(EmailFlag.FLAGGED, newstate)
-        self.email.clear()
         self.removeme(self)
