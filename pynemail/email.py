@@ -73,6 +73,9 @@ class Email:
             self._from = f
         return self._from
 
+    def to(self):
+        return self.headers()['To']
+
     def date(self):
         return self.headers()['Date'][:-5]
 
