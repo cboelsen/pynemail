@@ -2,7 +2,9 @@ import curses
 import functools
 import math
 
-from ..email import EmailFlag
+from typing import Callable
+
+from ..email import EmailFlag, Email
 
 from .page import Page
 from .utils import center, shrink_text_to_cols
@@ -10,7 +12,7 @@ from .utils import center, shrink_text_to_cols
 
 class DetailPage(Page):
 
-    def __init__(self, screen, email, removeme):
+    def __init__(self, screen: object, email: Email, removeme: Callable[[Page], None]) -> None:
         super().__init__()
         self.screen = screen
         self.height, self.width = curses.LINES - 6, curses.COLS - 10
@@ -18,7 +20,7 @@ class DetailPage(Page):
         self.win = curses.newwin(self.height, self.width, y, x)
         self.bodywin = self.win.subwin(self.height - 5, self.width - 4, y + 5, x + 2)
         self.removeme = removeme
-        self.email = email
+        self._set_email(email)
 
     def _render(self):
         self.win.clear()
@@ -49,18 +51,24 @@ class DetailPage(Page):
             return False
         return True
 
-    def _resize(self, h, w):
+    def _resize(self, h: int, w: int) -> None:
         pass
 
-    def _get_email(self):
+    def _get_email(self) -> Email:
         return self._email
 
-    def _set_email(self, email):
+    def _set_email(self, email: Email) -> None:
         self._email = email
         self.page = 0
         body = self._email.body()
         body_lines, body_columns = self.bodywin.getmaxyx()
-        self.lines = list(map(lambda x: x + " " * (body_columns - len(x)), functools.reduce(lambda x, y: x + y, [[x[i:i+body_columns] for i in range(0, len(x), body_columns)] for x in body.expandtabs(4).splitlines()])))
+        self.lines = list(map(
+            lambda x: x + " " * (body_columns - len(x)),
+            functools.reduce(
+                lambda x, y: x + y,
+                [[x[i:i+body_columns] for i in range(0, len(x), body_columns)] for x in body.expandtabs(4).splitlines()]
+            )
+        ))
         self.pages = int(math.ceil(len(self.lines) / self.bodywin.getmaxyx()[0]))
 
     email = property(_get_email, _set_email)
@@ -69,12 +77,12 @@ class DetailPage(Page):
         self.win.refresh()
         self.bodywin.refresh()
 
-    def toggle_read(self):
+    def toggle_read(self) -> None:
         newstate = self._email.unread()
-        self._email.set_flag(EmailFlag.READ, newstate)
+        self._email.set_flag(EmailFlag.SEEN, newstate)
         self.removeme(self)
 
-    def toggle_important(self):
+    def toggle_important(self) -> None:
         newstate = not self._email.important()
         self._email.set_flag(EmailFlag.FLAGGED, newstate)
         self.removeme(self)
