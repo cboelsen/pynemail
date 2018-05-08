@@ -7,7 +7,7 @@ from typing import Callable
 from ..email import EmailFlag, Email
 
 from .page import Page
-from .utils import center, shrink_text_to_cols
+from .utils import center, shrink_text_to_cols, wrap_text_to_cols
 
 
 class DetailPage(Page):
@@ -16,9 +16,9 @@ class DetailPage(Page):
         super().__init__()
         self.screen = screen
         self.height, self.width = curses.LINES - 6, curses.COLS - 10
-        y, x = center(self.height, self.width)
-        self.win = curses.newwin(self.height, self.width, y, x)
-        self.bodywin = self.win.subwin(self.height - 5, self.width - 4, y + 5, x + 2)
+        self.y, self.x = center(self.height, self.width)
+        self.win = curses.newwin(self.height, self.width, self.y, self.x)
+        self.bodywin = self.win.subwin(self.height - 5, self.width - 4, self.y + 5, self.x + 2)
         self.removeme = removeme
         self._set_email(email)
 
@@ -28,10 +28,13 @@ class DetailPage(Page):
         body_lines, body_columns = self.bodywin.getmaxyx()
         self.win.addstr(1, 2, 'From:    ' + shrink_text_to_cols(self._email.sender(), body_columns - 9))
         self.win.addstr(2, 2, 'To:      ' + shrink_text_to_cols(self._email.to(), body_columns - 9))
-        self.win.addstr(3, 2, 'Subject: ' + shrink_text_to_cols(self._email.subject(), body_columns - 9))
-        self.win.hline(4, 1, curses.ACS_HLINE, body_columns + 2)
-        self.win.addch(4, 0, curses.ACS_LTEE)
-        self.win.addch(4, body_columns + 3, curses.ACS_RTEE)
+        self.win.addstr(3, 2, 'Subject: ' + self.subject_lines[0])
+        for i, line in enumerate(self.subject_lines[1:]):
+            self.win.addstr(4 + i, 11, shrink_text_to_cols(line, body_columns - 9))
+        body_window_y = 3 + len(self.subject_lines)
+        self.win.hline(body_window_y, 1, curses.ACS_HLINE, body_columns + 2)
+        self.win.addch(body_window_y, 0, curses.ACS_LTEE)
+        self.win.addch(body_window_y, body_columns + 3, curses.ACS_RTEE)
         for i, line in enumerate(self.lines[body_lines * self.page:body_lines * (self.page + 1) - 1]):
             self.bodywin.addstr(i, 0, line)
 
@@ -62,14 +65,12 @@ class DetailPage(Page):
         self.page = 0
         body = self._email.body()
         body_lines, body_columns = self.bodywin.getmaxyx()
-        self.lines = list(map(
-            lambda x: x + " " * (body_columns - len(x)),
-            functools.reduce(
-                lambda x, y: x + y,
-                [[x[i:i+body_columns] for i in range(0, len(x), body_columns)] for x in body.expandtabs(4).splitlines()]
-            )
-        ))
-        self.pages = int(math.ceil(len(self.lines) / self.bodywin.getmaxyx()[0]))
+        self.subject_lines = wrap_text_to_cols(self._email.subject(), body_columns - 9)
+        if len(self.subject_lines) > 1:
+            self.bodywin = self.win.subwin(self.height - 4 - len(self.subject_lines), self.width - 4, self.y + 4 + len(self.subject_lines), self.x + 2)
+            body_lines, body_columns = self.bodywin.getmaxyx()
+        self.lines = wrap_text_to_cols(body, body_columns)
+        self.pages = int(math.ceil(len(self.lines) / body_lines))
 
     email = property(_get_email, _set_email)
 

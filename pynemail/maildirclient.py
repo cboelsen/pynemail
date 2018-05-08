@@ -91,6 +91,10 @@ class MaildirEmail(Email):
         self._mtime = 0.0
 
 
+def poll_maildir(maildir: pathlib.Path, new_mail_event):
+    pass
+
+
 def get_mail_from_maildir(maildir: pathlib.Path) -> List[MaildirEmail]:
     newmail = [MaildirEmail(e, True) for e in (maildir / 'new').glob('*')]
     curmail = [MaildirEmail(e, False) for e in (maildir / 'cur').glob('*')]

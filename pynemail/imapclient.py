@@ -1,5 +1,6 @@
 import getpass
 import imaplib
+import time
 
 from contextlib import contextmanager
 from enum import Enum
@@ -52,6 +53,14 @@ class ImapEmail(Email):
         imap_flag = MAP_FLAG_TO_IMAP[flag]
         self._imapcon.store(self._num, command, imap_flag)
         self.clear_flags()
+
+
+def poll_imap_server(client, new_mail_event):
+    while True:
+        recent_mail = client.recent()[1][0]
+        if recent_mail is not None:
+            new_mail_event.set()
+        time.sleep(10)
 
 
 @contextmanager

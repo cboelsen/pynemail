@@ -106,3 +106,7 @@ class InboxPage(Page):
 
     def _refresh(self):
         self.screen.refresh()
+
+    def set_mail(self, mail) -> None:
+        self.mail = mail
+        self._update_child_pages()
