@@ -22,13 +22,12 @@ class MenuOption:
 
 class EmailMenu(Page):
 
-    def __init__(self, screen, email, removeme):
+    def __init__(self, window, email, removeme):
         super().__init__()
-        self.screen = screen
         self.email = email
-        h, w = 4, 30
-        y, x = center(h, w)
-        self.menuwin = curses.newwin(h, w, y, x)
+        self.height, self.width = 4, 30
+        y, x = center(self.height, self.width)
+        self.menuwin = window.subwin(self.height, self.width, y, x)
         self.removeme = removeme
         self.selected_row = 0
         self.options = [
@@ -40,7 +39,7 @@ class EmailMenu(Page):
         self.menuwin.clear()
         for i, menuitem in enumerate(self.options):
             selected = self.selected_row == i
-            menuitem.render(selected, i + 1, 30)
+            menuitem.render(selected, i + 1, self.width - 2)
         self.menuwin.box()
 
     def _keypress(self, key):

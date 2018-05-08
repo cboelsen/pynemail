@@ -80,7 +80,6 @@ def mainloop(scr, args):
         #background_process.start()
 
         while True:
-            scr.clear()
             page.render()
 
             page.refresh()

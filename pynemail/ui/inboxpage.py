@@ -25,7 +25,7 @@ class EmailField:
             'I' if self.email.important() else ' ',
         )
 
-    def render(self, screen, column):
+    def render(self, window, column):
         extra = 0
         if self.email.unread():
             extra |= curses.A_BOLD
@@ -35,44 +35,50 @@ class EmailField:
         subject_text = shrink_text_to_cols(self.email.subject(), self.subject_width - 1)
         subject_text = subject_text.ljust(self.subject_width)
         text = '{}{}{}'.format(from_text, subject_text, self.email.date())
-        screen.addstr(column, 1, text, extra)
+        window.addstr(column, 1, text, extra)
         flag_x = self.from_width + self.subject_width + self.date_width + 1
-        screen.addstr(column, flag_x - 1, ' ', extra)
+        window.addstr(column, flag_x - 1, ' ', extra)
         if self.email.important():
-            screen.addstr(column, flag_x, 'I', curses.color_pair(3) | extra)
+            window.addstr(column, flag_x, 'I', curses.color_pair(3) | extra)
         else:
-            screen.addstr(column, flag_x, ' ', extra)
+            window.addstr(column, flag_x, ' ', extra)
         if self.email.replied():
-            screen.addstr(column, flag_x + 1, 'R', curses.color_pair(2) | extra)
+            window.addstr(column, flag_x + 1, 'R', curses.color_pair(2) | extra)
         else:
-            screen.addstr(column, flag_x + 1, ' ', extra)
+            window.addstr(column, flag_x + 1, ' ', extra)
         if self.email.deleted():
-            screen.addstr(column, flag_x + 2, 'X', curses.color_pair(1) | extra)
+            window.addstr(column, flag_x + 2, 'X', curses.color_pair(1) | extra)
         else:
-            screen.addstr(column, flag_x + 2, ' ', extra)
+            window.addstr(column, flag_x + 2, ' ', extra)
         if self.email.draft():
-            screen.addstr(column, flag_x + 3, 'D', curses.color_pair(4) | extra)
+            window.addstr(column, flag_x + 3, 'D', curses.color_pair(4) | extra)
         else:
-            screen.addstr(column, flag_x + 3, ' ', extra)
+            window.addstr(column, flag_x + 3, ' ', extra)
 
 
 class InboxPage(Page):
 
     def __init__(self, screen, mail):
         super().__init__()
-        self.screen = screen
+        self.window = screen.subwin(0, 0)
         self.mail = mail
         self.resize(curses.LINES, curses.COLS)
         self.selected_row = 0
+        self.redraw = True
 
     def _render(self):
+        if self.redraw:
+            self.window.clear()
         for i, m in enumerate(self.mail[:curses.LINES]):
-            selected = i == self.selected_row
-            e = EmailField(m, selected)
-            e.resize(self.from_width, curses.COLS)
-            e.render(self.screen, i + 1)
-        heading = '|' + 'FROM'.center(self.from_width - 1) + '|' + 'SUBJECT'.center(e.subject_width - 1) + '|' + 'DATE'.center(e.date_width - 1) + '|' + 'FLAGS'.center(e.flags_width - 1)
-        self.screen.addstr(0, 0, heading, curses.A_UNDERLINE)
+            if self.redraw or self.selected_row - 1 <= i <= self.selected_row + 1:
+                selected = i == self.selected_row
+                e = EmailField(m, selected)
+                e.resize(self.from_width, curses.COLS)
+                e.render(self.window, i + 1)
+        if self.redraw:
+            heading = '|' + 'FROM'.center(self.from_width - 1) + '|' + 'SUBJECT'.center(e.subject_width - 1) + '|' + 'DATE'.center(e.date_width - 1) + '|' + 'FLAGS'.center(e.flags_width - 1)
+            self.window.addstr(0, 0, heading, curses.A_UNDERLINE)
+        self.redraw = False
 
     def _resize(self, h, w):
         self.from_width = max([len(m.sender()) for m in self.mail]) + 1
@@ -95,17 +101,21 @@ class InboxPage(Page):
             return False
         #elif key == curses.KEY_ENTER:
         elif key == 10:  # ENTER
-            page = DetailPage(self.screen, self.mail[self.selected_row], self.child_pages.remove)
+            page = DetailPage(self.window, self.mail[self.selected_row], self._remove_child_page)
             self.child_pages.append(page)
             return False
         elif key == 9:  # TAB
-            page = EmailMenu(self.screen, self.mail[self.selected_row], self.child_pages.remove)
+            page = EmailMenu(self.window, self.mail[self.selected_row], self._remove_child_page)
             self.child_pages.append(page)
             return False
         return True
 
+    def _remove_child_page(self, page):
+        self.child_pages.remove(page)
+        self.redraw = True
+
     def _refresh(self):
-        self.screen.refresh()
+        self.window.refresh()
 
     def set_mail(self, mail) -> None:
         self.mail = mail
