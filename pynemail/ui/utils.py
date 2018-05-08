@@ -10,13 +10,13 @@ def center(height, width, screen_h=None, screen_w=None):
     return y, x
 
 
-def shrink_text_to_cols(text, cols):
+def fit_text_to_cols(text, cols):
     if len(text) > cols:
         return text[:cols - 3] + '...'
-    return text
+    return text + (' ' * (cols - len(text)))
 
 
-def _split_line_at_space(line, cols):
+def _split_line_at_space_if_possible(line, cols):
     for i, c in enumerate(line[cols-1::-1]):
         if c.isspace():
             return line[:cols-i], line[cols-i:]
@@ -25,8 +25,10 @@ def _split_line_at_space(line, cols):
 
 def wrap_text_to_cols(text, cols):
     wrapped_text = []
+    append_line = lambda l: wrapped_text.append(l + ' ' * (cols - len(l)))
     for line in text.expandtabs(4).splitlines():
-        while line:
-            l, line = _split_line_at_space(line, cols)
-            wrapped_text.append(l)
+        while len(line) > cols:
+            l, line = _split_line_at_space_if_possible(line, cols)
+            append_line(l)
+        append_line(line)
     return wrapped_text

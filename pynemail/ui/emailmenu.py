@@ -36,7 +36,6 @@ class EmailMenu(Page):
         ]
 
     def _render(self):
-        self.menuwin.clear()
         for i, menuitem in enumerate(self.options):
             selected = self.selected_row == i
             menuitem.render(selected, i + 1, self.width - 2)

@@ -3,7 +3,7 @@ import curses
 from .detailpage import DetailPage
 from .emailmenu import EmailMenu
 from .page import Page
-from .utils import shrink_text_to_cols
+from .utils import fit_text_to_cols
 
 
 class EmailField:
@@ -32,7 +32,7 @@ class EmailField:
         if self.selected:
             extra |= curses.A_STANDOUT
         from_text = self.email.sender().ljust(self.from_width)
-        subject_text = shrink_text_to_cols(self.email.subject(), self.subject_width - 1)
+        subject_text = fit_text_to_cols(self.email.subject(), self.subject_width - 1)
         subject_text = subject_text.ljust(self.subject_width)
         text = '{}{}{}'.format(from_text, subject_text, self.email.date())
         window.addstr(column, 1, text, extra)

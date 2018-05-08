@@ -7,7 +7,7 @@ from typing import Callable
 from ..email import EmailFlag, Email
 
 from .page import Page
-from .utils import center, shrink_text_to_cols, wrap_text_to_cols
+from .utils import center, fit_text_to_cols, wrap_text_to_cols
 
 
 class DetailPage(Page):
@@ -23,20 +23,21 @@ class DetailPage(Page):
         self._set_email(email)
 
     def _render(self):
-        self.win.clear()
         self.win.box()
         body_lines, body_columns = self.bodywin.getmaxyx()
-        self.win.addstr(1, 2, 'From:    ' + shrink_text_to_cols(self._email.sender(), body_columns - 9))
-        self.win.addstr(2, 2, 'To:      ' + shrink_text_to_cols(self._email.to(), body_columns - 9))
+        self.win.addstr(1, 2, 'From:    ' + fit_text_to_cols(self._email.sender(), body_columns - 10))
+        self.win.addstr(2, 2, 'To:      ' + fit_text_to_cols(self._email.to(), body_columns - 10))
         self.win.addstr(3, 2, 'Subject: ' + self.subject_lines[0])
         for i, line in enumerate(self.subject_lines[1:]):
-            self.win.addstr(4 + i, 11, shrink_text_to_cols(line, body_columns - 9))
+            self.win.addstr(4 + i, 11, line)
         body_window_y = 3 + len(self.subject_lines)
         self.win.hline(body_window_y, 1, curses.ACS_HLINE, body_columns + 2)
         self.win.addch(body_window_y, 0, curses.ACS_LTEE)
         self.win.addch(body_window_y, body_columns + 3, curses.ACS_RTEE)
         for i, line in enumerate(self.lines[body_lines * self.page:body_lines * (self.page + 1) - 1]):
             self.bodywin.addstr(i, 0, line)
+        for j in range(i + 1, body_lines - 1):
+            self.bodywin.addstr(j, 0,  ' ' * body_columns)
 
     def _keypress(self, key):
         if key == 9:  # TAB
@@ -65,7 +66,7 @@ class DetailPage(Page):
         self.page = 0
         body = self._email.body()
         body_lines, body_columns = self.bodywin.getmaxyx()
-        self.subject_lines = wrap_text_to_cols(self._email.subject(), body_columns - 9)
+        self.subject_lines = wrap_text_to_cols(self._email.subject(), body_columns - 10)
         if len(self.subject_lines) > 1:
             self.bodywin = self.win.subwin(self.height - 4 - len(self.subject_lines), self.width - 4, self.y + 4 + len(self.subject_lines), self.x + 2)
             body_lines, body_columns = self.bodywin.getmaxyx()
