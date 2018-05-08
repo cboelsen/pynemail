@@ -1,0 +1,19 @@
+CHANGES
+=======
+
+* Only refresh the widgets of the inbox that change
+* Wrap subject when the line's too long
+* Remove premature optimisation with email flags
+* Start introducing type annotations
+* Set the types in docstrings the right way around
+* Bring MaildirEmail up to parity with ImapEmail
+* Mark an email as read once opened
+* Show the "To" header in the detail window
+* Add CLI args to specify where to get emails from
+* Add a basic window for displaying the email body
+
+0.0.1
+-----
+
+* Initial code dump, after splitting into modules
+* Initial commit
