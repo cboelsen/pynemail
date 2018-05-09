@@ -20,6 +20,8 @@ class DetailPage(Page):
         self.win = curses.newwin(self.height, self.width, self.y, self.x)
         self.bodywin = self.win.subwin(self.height - 5, self.width - 4, self.y + 5, self.x + 2)
         self.removeme = removeme
+        self.subject_lines = []
+        self.previous_subject_lines = []
         self._set_email(email)
 
     def _render(self):
@@ -29,7 +31,9 @@ class DetailPage(Page):
         self.win.addstr(2, 2, 'To:      ' + fit_text_to_cols(self._email.to(), body_columns - 10))
         self.win.addstr(3, 2, 'Subject: ' + self.subject_lines[0])
         for i, line in enumerate(self.subject_lines[1:]):
-            self.win.addstr(4 + i, 11, line)
+            self.win.addstr(4 + i, 1, ' ' * 10 + line + '  ')
+        self.win.addstr(len(self.previous_subject_lines) + 3, 1, ' ')
+        self.win.addstr(len(self.previous_subject_lines) + 3, body_columns + 2, ' ')
         body_window_y = 3 + len(self.subject_lines)
         self.win.hline(body_window_y, 1, curses.ACS_HLINE, body_columns + 2)
         self.win.addch(body_window_y, 0, curses.ACS_LTEE)
@@ -40,7 +44,7 @@ class DetailPage(Page):
             self.bodywin.addstr(j, 0,  ' ' * body_columns)
 
     def _keypress(self, key):
-        if key == 9:  # TAB
+        if key == 10:  # ENTER
             return False
         elif key == 27:  # ESC
             self.removeme(self)
@@ -66,8 +70,9 @@ class DetailPage(Page):
         self.page = 0
         body = self._email.body()
         body_lines, body_columns = self.bodywin.getmaxyx()
+        self.previous_subject_lines = self.subject_lines
         self.subject_lines = wrap_text_to_cols(self._email.subject(), body_columns - 10)
-        if len(self.subject_lines) > 1:
+        if len(self.previous_subject_lines) != len(self.subject_lines):
             self.bodywin = self.win.subwin(self.height - 4 - len(self.subject_lines), self.width - 4, self.y + 4 + len(self.subject_lines), self.x + 2)
             body_lines, body_columns = self.bodywin.getmaxyx()
         self.lines = wrap_text_to_cols(body, body_columns)
