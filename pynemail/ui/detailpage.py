@@ -2,7 +2,7 @@ import curses
 import functools
 import math
 
-from typing import Callable
+from typing import Callable, List
 
 from ..email import EmailFlag, Email
 
@@ -12,7 +12,7 @@ from .utils import center, fit_text_to_cols, wrap_text_to_cols
 
 class DetailPage(Page):
 
-    def __init__(self, screen: object, email: Email, removeme: Callable[[Page], None]) -> None:
+    def __init__(self, screen: object, emails: List[Email], removeme: Callable[[Page], None]) -> None:
         super().__init__()
         self.screen = screen
         self.height, self.width = curses.LINES - 6, curses.COLS - 10
@@ -22,7 +22,7 @@ class DetailPage(Page):
         self.removeme = removeme
         self.subject_lines = []
         self.previous_subject_lines = []
-        self._set_email(email)
+        self._set_emails(emails)
 
     def _render(self):
         self.win.box()
@@ -63,11 +63,11 @@ class DetailPage(Page):
     def _resize(self, h: int, w: int) -> None:
         pass
 
-    def _get_email(self) -> Email:
-        return self._email
+    def _get_emails(self) -> List[Email]:
+        return [self._email]
 
-    def _set_email(self, email: Email) -> None:
-        self._email = email
+    def _set_emails(self, emails: List[Email]) -> None:
+        self._email = emails[0]
         self.page = 0
         body = self._email.body()
         body_lines, body_columns = self.bodywin.getmaxyx()
@@ -79,18 +79,8 @@ class DetailPage(Page):
         self.lines = wrap_text_to_cols(body, body_columns)
         self.pages = int(math.ceil(len(self.lines) / body_lines))
 
-    email = property(_get_email, _set_email)
+    emails = property(_get_emails, _set_emails)
 
     def _refresh(self):
         self.win.refresh()
         self.bodywin.refresh()
-
-    def toggle_read(self) -> None:
-        newstate = self._email.unread()
-        self._email.set_flag(EmailFlag.SEEN, newstate)
-        self.removeme(self)
-
-    def toggle_important(self) -> None:
-        newstate = not self._email.important()
-        self._email.set_flag(EmailFlag.FLAGGED, newstate)
-        self.removeme(self)

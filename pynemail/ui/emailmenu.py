@@ -20,20 +20,31 @@ class MenuOption:
         self.window.addstr(col, 1, self.text.center(width), extra)
 
 
+def toggle_flag_on_emails(flag, emails):
+    get_flag_state = lambda e: flag not in e.flags()
+    newstate = get_flag_state(emails[0])
+    for e in emails[1:]:
+        if newstate != get_flag_state(e):
+            newstate = True
+            break
+    for e in emails:
+        e.set_flag(flag, newstate)
+
+
 class EmailMenu(Page):
 
-    def __init__(self, window, email, removeme):
+    def __init__(self, window, emails, removeme):
         super().__init__()
-        self.email = email
+        self.emails = emails
         self.height, self.width = 5, 30
         y, x = center(self.height, self.width)
         self.menuwin = window.subwin(self.height, self.width, y, x)
         self.removeme = removeme
         self.selected_row = 0
         self.options = [
-            MenuOption(self.menuwin, 'Toggle (un)read', self.toggle_read),
-            MenuOption(self.menuwin, 'Toggle important', self.toggle_important),
-            MenuOption(self.menuwin, 'Toggle deleted', self.toggle_deleted),
+            MenuOption(self.menuwin, 'Toggle (un)read', lambda: self.toggle_flag(EmailFlag.SEEN)),
+            MenuOption(self.menuwin, 'Toggle important', lambda: self.toggle_flag(EmailFlag.FLAGGED)),
+            MenuOption(self.menuwin, 'Toggle deleted', lambda: self.toggle_flag(EmailFlag.DELETED)),
         ]
 
     def _render(self):
@@ -71,17 +82,6 @@ class EmailMenu(Page):
     def _get_selected_option(self):
         return self.options[self.selected_row]
 
-    def toggle_read(self):
-        newstate = self.email.unread()
-        self.email.set_flag(EmailFlag.SEEN, newstate)
-        self.removeme(self)
-
-    def toggle_important(self):
-        newstate = not self.email.important()
-        self.email.set_flag(EmailFlag.FLAGGED, newstate)
-        self.removeme(self)
-
-    def toggle_deleted(self):
-        newstate = not self.email.deleted()
-        self.email.set_flag(EmailFlag.DELETED, newstate)
+    def toggle_flag(self, flag):
+        toggle_flag_on_emails(flag, self.emails)
         self.removeme(self)

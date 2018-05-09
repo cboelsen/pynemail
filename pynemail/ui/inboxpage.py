@@ -85,8 +85,8 @@ class InboxPage(Page):
 
     def _update_child_pages(self):
         for child_page in self.child_pages:
-            if hasattr(child_page, 'email'):
-                child_page.email = self.mail[self.selected_row]
+            if hasattr(child_page, 'emails'):
+                child_page.emails = self._selected_emails()
 
     def _keypress(self, key):
         if key == curses.KEY_UP:
@@ -101,14 +101,17 @@ class InboxPage(Page):
             return False
         #elif key == curses.KEY_ENTER:
         elif key == 10:  # ENTER
-            page = DetailPage(self.window, self.mail[self.selected_row], self._remove_child_page)
+            page = DetailPage(self.window, self._selected_emails(), self._remove_child_page)
             self.child_pages.append(page)
             return False
         elif key == 9:  # TAB
-            page = EmailMenu(self.window, self.mail[self.selected_row], self._remove_child_page)
+            page = EmailMenu(self.window, self._selected_emails(), self._remove_child_page)
             self.child_pages.append(page)
             return False
         return True
+
+    def _selected_emails(self):
+        return [self.mail[self.selected_row]]
 
     def _remove_child_page(self, page):
         self.child_pages.remove(page)
