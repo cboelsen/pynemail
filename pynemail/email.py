@@ -62,9 +62,9 @@ class Email:
         return self._message
 
     def body(self) -> str:
+        if self.unread():
+            self.set_flag(EmailFlag.SEEN, True)
         if self._body is None:
-            if self.unread():
-                self.set_flag(EmailFlag.SEEN, True)
             body = self.message().get_body(preferencelist=('plain', ))
             if body is None:
                 self._body = " PynEmail Error: Unable to read email body!"
