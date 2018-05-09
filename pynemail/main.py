@@ -86,6 +86,7 @@ def mainloop(scr, args):
         scr.nodelay(True)
         mail = get_mail()
         page = InboxPage(scr, mail)
+        page.resize(curses.LINES, curses.COLS)
 
         #background_process = Process(target=background_fn, daemon=True)
         #background_process.start()

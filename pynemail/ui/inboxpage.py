@@ -1,4 +1,5 @@
 import curses
+import math
 
 from .detailpage import DetailPage
 from .emailmenu import EmailMenu
@@ -61,27 +62,37 @@ class InboxPage(Page):
     def __init__(self, screen, mail):
         super().__init__()
         self.window = screen.subwin(0, 0)
-        self.mail = mail
-        self.resize(curses.LINES, curses.COLS)
         self.selected_row = 0
         self.selected_row_start = -1
         self.redraw = True
+        self.page = 0
+        self.emails_per_page = 1
+        self.from_width = 0
+        self.set_mail(mail)
+
+    def _mail_on_screen(self):
+        return self.mail[self.emails_per_page * self.page:self.emails_per_page * (self.page + 1)]
 
     def _render(self):
         low, high = self._selected_row_range()
-        for i, m in enumerate(self.mail[:curses.LINES - 1]):
+        rendered_mail = self._mail_on_screen()
+        for i, m in enumerate(rendered_mail):
             if self.redraw or low - 1 <= i <= high + 1:
                 selected = low <= i <= high
                 e = EmailField(m, selected)
                 e.resize(self.from_width, curses.COLS)
                 e.render(self.window, i + 1)
         if self.redraw:
+            for j in range(i + 1, self.emails_per_page):
+                self.window.addstr(j + 1, 0, ' ' * (curses.COLS - 1))
             heading = '|' + 'FROM'.center(self.from_width - 1) + '|' + 'SUBJECT'.center(e.subject_width - 1) + '|' + 'DATE'.center(e.date_width - 1) + '|' + 'FLAGS'.center(e.flags_width - 1)
             self.window.addstr(0, 0, heading, curses.A_UNDERLINE)
         self.redraw = False
 
     def _resize(self, h, w):
         self.from_width = max([len(m.sender()) for m in self.mail]) + 1
+        self.emails_per_page = h - 1
+        self.pages = int(math.ceil(len(self.mail) / self.emails_per_page))
 
     def _selected_row_range(self):
         if self.selected_row_start == -1:
@@ -90,7 +101,7 @@ class InboxPage(Page):
 
     def _selected_emails(self):
         low, high = self._selected_row_range()
-        return self.mail[low:high+1]
+        return self._mail_on_screen()[low:high+1]
 
     def _update_child_pages(self):
         for child_page in self.child_pages:
@@ -102,11 +113,32 @@ class InboxPage(Page):
             if self.selected_row > 0:
                 self.selected_row -= 1
                 self._update_child_pages()
+            elif self.page > 0:
+                self.page -= 1
+                self.selected_row = self.emails_per_page - 1
+                self.redraw = True
             return False
         elif key == curses.KEY_DOWN:
-            if self.selected_row < curses.LINES - 2 and self.selected_row < len(self.mail) - 1:
+            if self.selected_row < len(self._mail_on_screen()) - 1:
                 self.selected_row += 1
                 self._update_child_pages()
+            elif self.page < self.pages - 1:
+                self.page += 1
+                self.selected_row = 0
+                self.redraw = True
+            return False
+        elif key == 339:  # PageUp
+            if self.page > 0:
+                self.page -= 1
+                self.redraw = True
+            return False
+        elif key == 338:  # PageDn
+            if self.page < self.pages - 1:
+                self.page += 1
+                mail_on_screen = self._mail_on_screen()
+                if self.selected_row >= len(mail_on_screen):
+                    self.selected_row = len(mail_on_screen) - 1
+                self.redraw = True
             return False
         #elif key == curses.KEY_ENTER:
         elif key == 10:  # ENTER
@@ -134,4 +166,5 @@ class InboxPage(Page):
 
     def set_mail(self, mail) -> None:
         self.mail = mail
+        self.pages = int(math.ceil(len(self.mail) / self.emails_per_page))
         self._update_child_pages()
