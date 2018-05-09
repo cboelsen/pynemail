@@ -64,14 +64,14 @@ class InboxPage(Page):
         self.mail = mail
         self.resize(curses.LINES, curses.COLS)
         self.selected_row = 0
+        self.selected_row_start = -1
         self.redraw = True
 
     def _render(self):
-        if self.redraw:
-            self.window.clear()
+        low, high = self._selected_row_range()
         for i, m in enumerate(self.mail[:curses.LINES - 1]):
-            if self.redraw or self.selected_row - 1 <= i <= self.selected_row + 1:
-                selected = i == self.selected_row
+            if self.redraw or low - 1 <= i <= high + 1:
+                selected = low <= i <= high
                 e = EmailField(m, selected)
                 e.resize(self.from_width, curses.COLS)
                 e.render(self.window, i + 1)
@@ -82,6 +82,15 @@ class InboxPage(Page):
 
     def _resize(self, h, w):
         self.from_width = max([len(m.sender()) for m in self.mail]) + 1
+
+    def _selected_row_range(self):
+        if self.selected_row_start == -1:
+            return self.selected_row, self.selected_row
+        return (self.selected_row, self.selected_row_start) if self.selected_row < self.selected_row_start else (self.selected_row_start, self.selected_row)
+
+    def _selected_emails(self):
+        low, high = self._selected_row_range()
+        return self.mail[low:high+1]
 
     def _update_child_pages(self):
         for child_page in self.child_pages:
@@ -108,10 +117,13 @@ class InboxPage(Page):
             page = EmailMenu(self.window, self._selected_emails(), self._remove_child_page)
             self.child_pages.append(page)
             return False
+        elif key == 32:  # SPACE BAR
+            if self.selected_row_start == -1:
+                self.selected_row_start = self.selected_row
+            else:
+                self.selected_row_start = -1
+                self.redraw = True
         return True
-
-    def _selected_emails(self):
-        return [self.mail[self.selected_row]]
 
     def _remove_child_page(self, page):
         self.child_pages.remove(page)
