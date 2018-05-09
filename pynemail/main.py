@@ -8,8 +8,17 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from multiprocessing import Event, Process
 
-from .imapclient import imap_client, get_mail_from_imap, poll_imap_server
-from .maildirclient import get_mail_from_maildir, poll_maildir
+from .imapclient import (
+    imap_client,
+    get_mail_from_imap,
+    poll_imap_server,
+    purge_imap,
+)
+from .maildirclient import (
+    get_mail_from_maildir,
+    poll_maildir,
+    purge_maildir,
+)
 
 from .ui import InboxPage
 
@@ -65,10 +74,12 @@ def mainloop(scr, args):
             maildir = pathlib.Path(args.maildir)
             get_mail = lambda: get_mail_from_maildir(maildir)
             background_fn = lambda: poll_maildir(maildir, new_mail)
+            purge_deleted_mail = lambda mail: purge_maildir(maildir, mail)
         elif args.imap:
             client = stack.enter_context(imap_client(args.imap, scr.getstr().decode()))
             get_mail = lambda: get_mail_from_imap(client)
             background_fn = lambda: poll_imap_server(client, new_mail)
+            purge_deleted_mail = lambda mail: purge_imap(client, mail)
         else:
             raise Exception("Argh! How'd I get here!")
 
@@ -102,6 +113,8 @@ def mainloop(scr, args):
             elif key == curses.KEY_RESIZE:
                 pass  # TODO: Something!
             page.keypress(key)
+
+        purge_deleted_mail(mail)
 
 
 def main():

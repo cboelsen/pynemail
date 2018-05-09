@@ -63,6 +63,10 @@ def poll_imap_server(client, new_mail_event):
         time.sleep(10)
 
 
+def purge_imap(client: imaplib.IMAP4, mail: List[ImapEmail]) -> None:
+    client.expunge()
+
+
 @contextmanager
 def imap_client(server: str, password: str) -> Generator:
     server, port = server.split(':') if ':' in server else server, imaplib.IMAP4_PORT

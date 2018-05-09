@@ -25,7 +25,7 @@ class EmailMenu(Page):
     def __init__(self, window, email, removeme):
         super().__init__()
         self.email = email
-        self.height, self.width = 4, 30
+        self.height, self.width = 5, 30
         y, x = center(self.height, self.width)
         self.menuwin = window.subwin(self.height, self.width, y, x)
         self.removeme = removeme
@@ -33,6 +33,7 @@ class EmailMenu(Page):
         self.options = [
             MenuOption(self.menuwin, 'Toggle (un)read', self.toggle_read),
             MenuOption(self.menuwin, 'Toggle important', self.toggle_important),
+            MenuOption(self.menuwin, 'Toggle deleted', self.toggle_deleted),
         ]
 
     def _render(self):
@@ -78,4 +79,9 @@ class EmailMenu(Page):
     def toggle_important(self):
         newstate = not self.email.important()
         self.email.set_flag(EmailFlag.FLAGGED, newstate)
+        self.removeme(self)
+
+    def toggle_deleted(self):
+        newstate = not self.email.deleted()
+        self.email.set_flag(EmailFlag.DELETED, newstate)
         self.removeme(self)

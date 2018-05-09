@@ -95,6 +95,12 @@ def poll_maildir(maildir: pathlib.Path, new_mail_event):
     pass
 
 
+def purge_maildir(maildir: pathlib.Path, mail: List[MaildirEmail]) -> None:
+    for email in mail:
+        if email.deleted():
+            email.filepath.unlink()
+
+
 def get_mail_from_maildir(maildir: pathlib.Path) -> List[MaildirEmail]:
     newmail = [MaildirEmail(e, True) for e in (maildir / 'new').glob('*')]
     curmail = [MaildirEmail(e, False) for e in (maildir / 'cur').glob('*')]

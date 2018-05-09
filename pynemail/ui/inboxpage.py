@@ -69,7 +69,7 @@ class InboxPage(Page):
     def _render(self):
         if self.redraw:
             self.window.clear()
-        for i, m in enumerate(self.mail[:curses.LINES]):
+        for i, m in enumerate(self.mail[:curses.LINES - 1]):
             if self.redraw or self.selected_row - 1 <= i <= self.selected_row + 1:
                 selected = i == self.selected_row
                 e = EmailField(m, selected)

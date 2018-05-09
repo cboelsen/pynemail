@@ -28,6 +28,7 @@ class DetailPage(Page):
         self.win.box()
         body_lines, body_columns = self.bodywin.getmaxyx()
         self.win.addstr(1, 2, 'From:    ' + fit_text_to_cols(self._email.sender(), body_columns - 10))
+        self.win.addstr(1, body_columns - 32, 'Date: ' + str(self._email.date()))
         self.win.addstr(2, 2, 'To:      ' + fit_text_to_cols(self._email.to(), body_columns - 10))
         self.win.addstr(3, 2, 'Subject: ' + self.subject_lines[0])
         for i, line in enumerate(self.subject_lines[1:]):
