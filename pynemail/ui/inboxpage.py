@@ -15,7 +15,7 @@ class EmailField:
         self.from_width = 0
         self.subject_width = 0
         self.date_width = 26
-        self.flags_width = 6
+        self.flags_width = 7
 
     def resize(self, from_width, screen_width):
         self.from_width = from_width
@@ -55,6 +55,10 @@ class EmailField:
             window.addstr(column, flag_x + 3, 'D', curses.color_pair(4) | extra)
         else:
             window.addstr(column, flag_x + 3, ' ', extra)
+        if self.email.attachments():
+            window.addstr(column, flag_x + 4, 'A', curses.color_pair(4) | extra)
+        else:
+            window.addstr(column, flag_x + 4, ' ', extra)
 
 
 class InboxPage(Page):

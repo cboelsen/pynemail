@@ -33,9 +33,13 @@ class DetailPage(Page):
         self.win.addstr(3, 2, 'Subject: ' + self.subject_lines[0])
         for i, line in enumerate(self.subject_lines[1:]):
             self.win.addstr(4 + i, 1, ' ' * 10 + line + '  ')
+        if self._email.attachments():
+            self.win.addstr(3 + len(self.subject_lines), 2, 'Attachments: ' + fit_text_to_cols(self._email.attachments()[0].filename(), body_columns - 13))
+            for i, attachment in enumerate(self._email.attachments()[1:]):
+                self.win.addstr(4 + len(self.subject_lines) + i, 2, ' ' * 13 + fit_text_to_cols(attachment.filename(), body_columns - 13))
         self.win.addstr(len(self.previous_subject_lines) + 3, 1, ' ')
         self.win.addstr(len(self.previous_subject_lines) + 3, body_columns + 2, ' ')
-        body_window_y = 3 + len(self.subject_lines)
+        body_window_y = 3 + len(self.subject_lines) + len(self._email.attachments())
         self.win.hline(body_window_y, 1, curses.ACS_HLINE, body_columns + 2)
         self.win.addch(body_window_y, 0, curses.ACS_LTEE)
         self.win.addch(body_window_y, body_columns + 3, curses.ACS_RTEE)
@@ -73,9 +77,9 @@ class DetailPage(Page):
         body_lines, body_columns = self.bodywin.getmaxyx()
         self.previous_subject_lines = self.subject_lines
         self.subject_lines = wrap_text_to_cols(self._email.subject(), body_columns - 10)
-        if len(self.previous_subject_lines) != len(self.subject_lines):
-            self.bodywin = self.win.subwin(self.height - 4 - len(self.subject_lines), self.width - 4, self.y + 4 + len(self.subject_lines), self.x + 2)
-            body_lines, body_columns = self.bodywin.getmaxyx()
+        header_height = 4 + len(self.subject_lines) + len(self._email.attachments())
+        self.bodywin = self.win.subwin(self.height - header_height, self.width - 4, self.y + header_height, self.x + 2)
+        body_lines, body_columns = self.bodywin.getmaxyx()
         self.lines = wrap_text_to_cols(body, body_columns)
         self.pages = int(math.ceil(len(self.lines) / body_lines))
 

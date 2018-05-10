@@ -15,6 +15,38 @@ class EmailFlag(Enum):
     DRAFT = 'D'
 
 
+class Attachment:
+
+    def __init__(self, message):
+        self.message = message
+        self._filename = None
+        self._content = None
+
+    def filename(self):
+        if self._filename is None:
+            for disp in self.message.get('Content-Disposition').split(';'):
+                if '=' in disp:
+                    disp = disp.strip()
+                    key, value = disp.split('=')
+                    if key == 'filename':
+                        if value[0] == '"' and value[-1] == '"':
+                            value = value[1:-1]
+                        self._filename = value
+                        break
+            else:
+                self._filename = ''
+        return self._filename
+
+    def content(self):
+        if self._content is None:
+            self._content = self.message.get_content()
+        return self._content
+
+    @staticmethod
+    def get_attachments(message):
+        return [Attachment(p) for p in message.get_payload() if p.get('Content-Disposition') and p.get('Content-Disposition').startswith('attachment')]
+
+
 class Email:
     """A cached copy of a single email."""
 
@@ -72,6 +104,14 @@ class Email:
                 self._body = body.get_content()
         return self._body
 
+    def attachments(self) -> List[Attachment]:
+        if self._attachments is None:
+            if self.message().is_multipart():
+                self._attachments = Attachment.get_attachments(self.message())
+            else:
+                self._attachments = []
+        return self._attachments
+
     def sender(self) -> str:
         if self._from is None:
             fro = self.headers()['From']
@@ -114,6 +154,7 @@ class Email:
         self.clear_flags()
         self._headers = None
         self._message = None
+        self._attachments = None
         self._body = None
         self._from = None
 
