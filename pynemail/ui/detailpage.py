@@ -6,13 +6,13 @@ from typing import Callable, List
 
 from ..email import EmailFlag, Email
 
-from .page import Page
 from .utils import center, fit_text_to_cols, wrap_text_to_cols
+from .widget import Widget
 
 
-class DetailPage(Page):
+class DetailPage(Widget):
 
-    def __init__(self, screen: object, emails: List[Email], removeme: Callable[[Page], None]) -> None:
+    def __init__(self, screen: object, emails: List[Email], removeme: Callable[[Widget], None]) -> None:
         super().__init__()
         self.screen = screen
         self.height, self.width = curses.LINES - 6, curses.COLS - 10

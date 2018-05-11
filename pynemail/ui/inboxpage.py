@@ -3,8 +3,8 @@ import math
 
 from .detailpage import DetailPage
 from .emailmenu import EmailMenu
-from .page import Page
 from .utils import fit_text_to_cols
+from .widget import Widget
 
 
 class EmailField:
@@ -61,7 +61,7 @@ class EmailField:
             window.addstr(column, flag_x + 4, ' ', extra)
 
 
-class InboxPage(Page):
+class InboxPage(Widget):
 
     def __init__(self, screen, mail):
         super().__init__()

@@ -1,7 +1,7 @@
 from typing import List
 
 
-class Page:
+class Widget:
 
     def __init__(self) -> None:
         self.child_pages = []  # type: List[Page]

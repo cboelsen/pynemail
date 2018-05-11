@@ -2,8 +2,8 @@ import curses
 
 from ..email import EmailFlag
 
-from .page import Page
 from .utils import center
+from .widget import Widget
 
 
 class MenuOption:
@@ -31,7 +31,7 @@ def toggle_flag_on_emails(flag, emails):
         e.set_flag(flag, newstate)
 
 
-class EmailMenu(Page):
+class EmailMenu(Widget):
 
     def __init__(self, window, emails, removeme):
         super().__init__()

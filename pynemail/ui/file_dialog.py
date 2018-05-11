@@ -1,10 +1,10 @@
 import curses
 
-from .page import Page
+from .widget import Widget
 from .utils import center
 
 
-class FileDialog(Page):
+class FileDialog(Widget):
 
     def __init__(self, dirpath, removeme, filename=None):
         self._dirpath = dirpath
