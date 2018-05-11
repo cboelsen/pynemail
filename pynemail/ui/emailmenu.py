@@ -35,22 +35,20 @@ class EmailMenu(Page):
 
     def __init__(self, window, emails, removeme):
         super().__init__()
-        self.emails = emails
-        self.height, self.width = 5, 30
+        self.height, self.width = 8, 30
         y, x = center(self.height, self.width)
         self.menuwin = window.subwin(self.height, self.width, y, x)
         self.removeme = removeme
         self.selected_row = 0
-        self.options = [
-            MenuOption(self.menuwin, 'Toggle (un)read', lambda: self.toggle_flag(EmailFlag.SEEN)),
-            MenuOption(self.menuwin, 'Toggle important', lambda: self.toggle_flag(EmailFlag.FLAGGED)),
-            MenuOption(self.menuwin, 'Toggle deleted', lambda: self.toggle_flag(EmailFlag.DELETED)),
-        ]
+        self.options = []
+        self._set_emails(emails)
 
     def _render(self):
         for i, menuitem in enumerate(self.options):
             selected = self.selected_row == i
             menuitem.render(selected, i + 1, self.width - 2)
+        for j in range(i + 1, self.height - 2):
+            self.menuwin.addstr(j + 1, 1, ' ' * (self.width - 2))
         self.menuwin.box()
 
     def _keypress(self, key):
@@ -82,6 +80,25 @@ class EmailMenu(Page):
     def _get_selected_option(self):
         return self.options[self.selected_row]
 
+    def _get_emails(self):
+        return self._emails
+
+    def _set_emails(self, emails):
+        self._emails = emails
+        self.options = [
+            MenuOption(self.menuwin, 'Toggle (un)read', lambda: self.toggle_flag(EmailFlag.SEEN)),
+            MenuOption(self.menuwin, 'Toggle important', lambda: self.toggle_flag(EmailFlag.FLAGGED)),
+            MenuOption(self.menuwin, 'Toggle deleted', lambda: self.toggle_flag(EmailFlag.DELETED)),
+        ]
+        any_attachments = any([e.attachments() for e in self._emails])
+        if any_attachments:
+            self.options.append(MenuOption(self.menuwin, "Save attachment(s)", self.save_attachments))
+
+    emails = property(_get_emails, _set_emails)
+
     def toggle_flag(self, flag):
         toggle_flag_on_emails(flag, self.emails)
         self.removeme(self)
+
+    def save_attachments(self):
+        pass
