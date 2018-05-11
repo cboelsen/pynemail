@@ -91,7 +91,7 @@ class MaildirEmail(Email):
         self._mtime = 0.0
 
 
-def poll_maildir(maildir: pathlib.Path, new_mail_event):
+def poll_maildir(maildir: pathlib.Path, update_mail):
     pass
 
 

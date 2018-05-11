@@ -55,11 +55,11 @@ class ImapEmail(Email):
         self.clear_flags()
 
 
-def poll_imap_server(client, new_mail_event):
+def poll_imap_server(client, update_mail):
     while True:
         recent_mail = client.recent()[1][0]
         if recent_mail is not None:
-            new_mail_event.set()
+            update_mail()
         time.sleep(10)
 
 

@@ -20,7 +20,7 @@ from .maildirclient import (
     purge_maildir,
 )
 
-from .ui import InboxPage
+from .ui import App, InboxPage
 
 
 class CheckImapServerAction:
@@ -64,64 +64,44 @@ def setup_curses(scr):
     curses.curs_set(0)
 
 
-def mainloop(scr, args):
-    setup_curses(scr)
-
-    new_mail = Event()
-
-    with ExitStack() as stack:
-        if args.maildir:
-            maildir = pathlib.Path(args.maildir)
-            get_mail = lambda: get_mail_from_maildir(maildir)
-            background_fn = lambda: poll_maildir(maildir, new_mail)
-            purge_deleted_mail = lambda mail: purge_maildir(maildir, mail)
-        elif args.imap:
-            client = stack.enter_context(imap_client(args.imap, scr.getstr().decode()))
-            get_mail = lambda: get_mail_from_imap(client)
-            background_fn = lambda: poll_imap_server(client, new_mail)
-            purge_deleted_mail = lambda mail: purge_imap(client, mail)
-        else:
-            raise Exception("Argh! How'd I get here!")
-
-        scr.nodelay(True)
-        mail = get_mail()
-        page = InboxPage(scr, mail)
-        page.resize(curses.LINES, curses.COLS)
-
-        #background_process = Process(target=background_fn, daemon=True)
-        #background_process.start()
-
-        while True:
-            page.render()
-
-            page.refresh()
-            key = -1
-            while key == -1:
-                key = scr.getch()
-                time.sleep(0.02)
-                #if new_mail.wait(0.02):
-                #    mail = get_mail()
-                #    page.set_mail(mail)
-                #    scr.clear()
-                #    page.render()
-                #    page.refresh()
-                    #scr.addstr(40, 0, str(client.recent()))
-                    #page.refresh()
-            #scr.addstr(40, 0, str(key))
-            #page.refresh()
-            if key == ord('q') or key == ord('Q'):
-                break
-            elif key == curses.KEY_RESIZE:
-                pass  # TODO: Something!
-            page.keypress(key)
-
-        purge_deleted_mail(mail)
-
-
 def main():
     args = parse_args()
     os.environ.setdefault('ESCDELAY', '25')
-    curses.wrapper(mainloop, args)
+    with App() as app:
+        setup_curses(app.screen)
+
+        with ExitStack() as stack:
+            if args.maildir:
+                maildir = pathlib.Path(args.maildir)
+                get_mail = lambda: get_mail_from_maildir(maildir)
+                poll_mail_change = lambda fn: poll_maildir(maildir, fn)
+                purge_deleted_mail = lambda mail: purge_maildir(maildir, mail)
+            elif args.imap:
+                client = stack.enter_context(imap_client(args.imap, app.screen.getstr().decode()))
+                get_mail = lambda: get_mail_from_imap(client)
+                poll_mail_change = lambda fn: poll_imap_server(client, fn)
+                purge_deleted_mail = lambda mail: purge_imap(client, mail)
+            else:
+                raise Exception("Argh! How'd I get here!")
+
+            mail = get_mail()
+            page = InboxPage(app.screen, mail)
+            page.resize(curses.LINES, curses.COLS)
+
+            def update_mail():
+                mail = get_mail()
+                page.set_mail(mail)
+
+            app.repeat(30, poll_mail_change, update_mail)
+            app.run(page)
+            purge_deleted_mail(mail)
+    #with ExitStack() as stack:
+    #    import getpass
+    #    client = stack.enter_context(imap_client(args.imap, getpass.getpass()))
+    #    mail = get_mail_from_imap(client)
+    #    import pdb
+    #    pdb.set_trace()
+    #    print(mail)
 
 
 if __name__ == "__main__":
