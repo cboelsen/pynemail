@@ -1,5 +1,7 @@
+import contextlib
 import curses
 import functools
+import urwid
 
 
 def center(height, width, screen_h=None, screen_w=None):
@@ -32,3 +34,26 @@ def wrap_text_to_cols(text, cols):
             append_line(l)
         append_line(line)
     return wrapped_text
+
+
+@contextlib.contextmanager
+def hidden_cursor():
+    urwid.escape.ORIGINAL_SHOW_CURSOR = urwid.escape.SHOW_CURSOR
+    urwid.escape.SHOW_CURSOR = ''
+    try:
+        yield
+    finally:
+        #urwid.escape.SHOW_CURSOR = urwid.escape.ORIGINAL_SHOW_CURSOR
+        urwid.escape.SHOW_CURSOR = urwid.escape.ESC + "[?25h"
+
+
+@contextlib.contextmanager
+def shown_cursor():
+    try:
+        urwid.escape.SHOW_CURSOR = urwid.escape.ORIGINAL_SHOW_CURSOR
+    except AttributeError:
+        raise Exception('you have to hide the cursor before you can show it again')
+    try:
+        yield
+    finally:
+        urwid.escape.SHOW_CURSOR = ''

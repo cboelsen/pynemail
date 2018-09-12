@@ -34,7 +34,6 @@ class EmailField:
             extra |= curses.A_STANDOUT
         from_text = self.email.sender().ljust(self.from_width)
         subject_text = fit_text_to_cols(self.email.subject(), self.subject_width - 1)
-        subject_text = subject_text.ljust(self.subject_width)
         text = '{}{}{}'.format(from_text, subject_text, self.email.date())
         window.addstr(column, 1, text, extra)
         flag_x = self.from_width + self.subject_width + self.date_width + 1
